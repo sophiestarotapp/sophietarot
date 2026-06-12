@@ -1,103 +1,64 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useMemo, useState } from "react";
+import MagicalRoom from "@/components/room/MagicalRoom";
+import TopHud from "@/components/home/TopHud";
+import SophieWorkspace from "@/components/home/SophieWorkspace";
+import { RightRail } from "@/components/home/SidePanels";
+import WardrobeModal from "@/components/home/WardrobeModal";
+import BottomNav from "@/components/nav/BottomNav";
+import { getPresenceStatus } from "@/lib/ambience";
+import { buildJournalEntry } from "@/lib/journal";
+import { useSophieStore } from "@/lib/store";
+
+export default function HomePage() {
+  const username = useSophieStore((s) => s.username);
+  const bond = useSophieStore((s) => s.bond);
+  const readings = useSophieStore((s) => s.readings);
+  const loginStreak = useSophieStore((s) => s.loginStreak);
+  const firstVisitAt = useSophieStore((s) => s.firstVisitAt);
+  const notifications = useSophieStore((s) => s.notifications);
+  const appendJournalEntry = useSophieStore((s) => s.appendJournalEntry);
+
+  const [closetOpen, setClosetOpen] = useState(false);
+
+  const presence = useMemo(
+    () =>
+      getPresenceStatus(new Date(), {
+        hasUnreadLetter: notifications.some((n) => !n.read),
+      }),
+    [notifications]
+  );
+
+  useEffect(() => {
+    const daysTogether = Math.max(
+      1,
+      Math.floor((Date.now() - (firstVisitAt || Date.now())) / 86_400_000) + 1
+    );
+    appendJournalEntry(
+      buildJournalEntry(username, {
+        readings: readings.length,
+        bond,
+        loginStreak,
+        daysTogether,
+      })
+    );
+  }, [appendJournalEntry, username, bond, readings.length, loginStreak, firstVisitAt]);
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <MagicalRoom depthBlur>
+      <TopHud />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <main className="relative z-10 flex min-h-dvh flex-col items-center justify-end pb-[5rem] pt-[4.5rem] sm:pb-[5.25rem] sm:pt-[4.25rem]">
+        <SophieWorkspace emotion={presence.emotion} />
+
+        <div className="pointer-events-none absolute right-1.5 top-[42%] z-30 sm:right-2 sm:top-[43%]">
+          <RightRail onOpenCloset={() => setClosetOpen(true)} />
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+      <WardrobeModal open={closetOpen} onClose={() => setClosetOpen(false)} />
+      <BottomNav />
+    </MagicalRoom>
   );
 }

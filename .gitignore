@@ -13,9 +13,10 @@
 # testing
 /coverage
 
-# next.js
+# next.js — build output lives in LOCALAPPDATA (see next.config.ts), not here
 /.next/
 /out/
+.sophies-tarot-next/
 
 # production
 /build

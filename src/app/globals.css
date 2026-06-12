@@ -1,26 +1,257 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* ─── Sophie's Tarot — Official Brand Palette v1.0 ─────
+     Starlight Pink #F7B7D8 · Rose Quartz #EFA6C6
+     Moonlight Lavender #CDB7F5 · Dream Violet #8E6CC7
+     Midnight Plum #432857 · Ivory Cream #FFF6F1
+     Gold Dust #F4C96B · Crystal Blue / Mystic Mint / Sunlit Peach */
+  --color-blush-50: #fef4f9;
+  --color-blush-100: #fce4f1;
+  --color-blush-200: #f7b7d8; /* Starlight Pink */
+  --color-blush-300: #efa6c6; /* Rose Quartz */
+  --color-blush-400: #e87fb1;
+  --color-blush-500: #d9579a;
+
+  --color-lavender-50: #f7f3fd;
+  --color-lavender-100: #ece3fb;
+  --color-lavender-200: #ddccf9;
+  --color-lavender-300: #cdb7f5; /* Moonlight Lavender */
+  --color-lavender-400: #ab8fdf;
+  --color-lavender-500: #8e6cc7; /* Dream Violet */
+
+  --color-cream-50: #fff6f1; /* Ivory Cream */
+  --color-cream-100: #fdeee6;
+  --color-cream-200: #f8e2d4;
+
+  --color-gold-200: #f9e3b3;
+  --color-gold-300: #f4c96b; /* Gold Dust */
+  --color-gold-400: #e0ab3f;
+  --color-gold-500: #c08e26;
+
+  --color-plum-700: #5d3b78;
+  --color-plum-800: #4f3066;
+  --color-plum-900: #432857; /* Midnight Plum */
+  --color-plum-950: #2c1840;
+
+  --color-crystal-300: #a8dfff; /* Crystal Blue */
+  --color-mint-300: #bfeed5; /* Mystic Mint */
+  --color-peach-300: #ffd6c0; /* Sunlit Peach */
+
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  /* brand corner radii */
+  --radius-card: 24px;
+  --radius-btn: 20px;
+  --radius-panel: 28px;
+
+  --shadow-glow-pink: 0 0 24px rgba(247, 183, 216, 0.55);
+  --shadow-glow-gold: 0 0 20px rgba(244, 201, 107, 0.5);
+  --shadow-card: 0 6px 22px rgba(244, 201, 107, 0.18);
+
+  --drop-shadow-glow-pink: 0 0 6px rgba(247, 183, 216, 0.85);
+  --drop-shadow-glow-gold: 0 0 6px rgba(244, 201, 107, 0.85);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
+  overscroll-behavior: none;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  background: #2c1840;
+  color: #fff6f1;
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: rgba(247, 183, 216, 0.45);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(185, 156, 228, 0.4);
+  border-radius: 8px;
+}
+
+/* ─── Reusable surfaces ─────────────────────────────────── */
+/* In the components layer so Tailwind rounded-* utilities can
+   override the brand-default radii where needed. */
+
+@layer components {
+.glass-panel {
+  background: linear-gradient(
+    160deg,
+    rgba(79, 48, 102, 0.78),
+    rgba(44, 24, 64, 0.86)
+  );
+  border: 1px solid rgba(244, 201, 107, 0.28);
+  border-radius: var(--radius-panel);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(20, 8, 34, 0.5);
+}
+
+.gold-text {
+  background: linear-gradient(180deg, #f9e3b3 10%, #f4c96b 60%, #c08e26 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.btn-magical {
+  position: relative;
+  background: linear-gradient(135deg, #f7b7d8, #cdb7f5 55%, #ab8fdf);
+  border: 1px solid rgba(249, 227, 179, 0.8);
+  border-radius: var(--radius-btn);
+  box-shadow:
+    0 0 22px rgba(247, 183, 216, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+.btn-magical:hover {
+  filter: brightness(1.08);
+  box-shadow:
+    0 0 32px rgba(247, 183, 216, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.btn-magical:active {
+  transform: scale(0.97);
+}
+
+/* Home CTA — luxurious, darker pink, restrained gold glow */
+.btn-start-reading {
+  position: relative;
+  background: linear-gradient(
+    145deg,
+    #d986a8 0%,
+    #c47296 38%,
+    #a86a9e 72%,
+    #8e6cc7 100%
+  );
+  border: 1.5px solid rgba(244, 201, 107, 0.72);
+  border-radius: 1.125rem;
+  box-shadow:
+    0 0 18px rgba(244, 201, 107, 0.22),
+    0 6px 24px rgba(44, 24, 64, 0.42),
+    inset 0 1px 0 rgba(255, 246, 241, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+.btn-start-reading:hover {
+  filter: brightness(1.04);
+  box-shadow:
+    0 0 22px rgba(244, 201, 107, 0.32),
+    0 8px 28px rgba(44, 24, 64, 0.48),
+    inset 0 1px 0 rgba(255, 246, 241, 0.4);
+}
+.btn-start-reading:active {
+  transform: scale(0.98);
+}
+}
+
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 60%
+  );
+  transform: translateX(-120%);
+  animation: shimmer-sweep 3.2s ease-in-out infinite;
+}
+@keyframes shimmer-sweep {
+  0%, 55% { transform: translateX(-120%); }
+  85%, 100% { transform: translateX(120%); }
+}
+
+/* ─── Ambient keyframes ─────────────────────────────────── */
+
+@keyframes candle-flicker {
+  0%, 100% { transform: scaleY(1) scaleX(1); opacity: 0.95; }
+  25% { transform: scaleY(1.12) scaleX(0.92); opacity: 1; }
+  50% { transform: scaleY(0.94) scaleX(1.05); opacity: 0.85; }
+  75% { transform: scaleY(1.06) scaleX(0.96); opacity: 0.98; }
+}
+.candle-flame {
+  transform-origin: 50% 100%;
+  animation: candle-flicker 1.6s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+.twinkle {
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+@keyframes drift-up {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  12% { opacity: 0.9; }
+  88% { opacity: 0.6; }
+  100% { transform: translateY(-90vh) translateX(24px); opacity: 0; }
+}
+.particle {
+  animation: drift-up linear infinite;
+}
+
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.float-soft {
+  animation: float-soft 4s ease-in-out infinite;
+}
+
+/* weather: snow & petals drift with sway, rain falls straight */
+@keyframes fall-sway {
+  0% { transform: translateY(-6vh) translateX(0) rotate(0deg); opacity: 0; }
+  8% { opacity: 0.9; }
+  90% { opacity: 0.7; }
+  100% { transform: translateY(108vh) translateX(36px) rotate(200deg); opacity: 0; }
+}
+.fall-sway {
+  animation: fall-sway linear infinite;
+}
+@keyframes fall-straight {
+  0% { transform: translateY(-12vh); opacity: 0; }
+  10% { opacity: 0.5; }
+  100% { transform: translateY(110vh); opacity: 0.3; }
+}
+.fall-straight {
+  animation: fall-straight linear infinite;
+}
+
+/* rarity auras */
+.aura-common { box-shadow: 0 0 10px rgba(200, 200, 210, 0.35); }
+.aura-rare { box-shadow: 0 0 14px rgba(110, 180, 250, 0.5); }
+.aura-sr { box-shadow: 0 0 16px rgba(185, 156, 228, 0.65); }
+.aura-ssr { box-shadow: 0 0 20px rgba(232, 200, 122, 0.75); }
+.aura-ur { box-shadow: 0 0 26px rgba(245, 168, 199, 0.85), 0 0 40px rgba(232, 200, 122, 0.5); }
+
+/* card flip helpers */
+.preserve-3d { transform-style: preserve-3d; }
+.backface-hidden { backface-visibility: hidden; }
+
+/* Keep tarot art sharp during CSS transforms / retina scaling */
+.tarot-card-art {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  image-rendering: auto;
 }
