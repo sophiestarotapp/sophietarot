@@ -16,10 +16,10 @@ export const ROOM_BACKGROUNDS: RoomBackground[] = [
   },
   {
     id: "premium-library",
-    name: "Premium Library",
-    description: "A rose-gold parlour with castle views, candlelight, and crystal glow.",
+    name: "Premium Parlour",
+    description: "A rose-gold grand hall with castle views, candlelight, and a glowing magic circle.",
     src: "/sophie-room-premium.png",
-    objectPosition: "center center",
+    objectPosition: "center 48%",
   },
 ];
 

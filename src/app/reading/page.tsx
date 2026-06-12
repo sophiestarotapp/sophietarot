@@ -239,19 +239,17 @@ export default function ReadingPage() {
     savedRef.current = false;
   };
 
+  // Fan geometry — sized to fit a ~330px usable phone width:
+  // 12 cards × 22px step + 64px card = 306px total span.
+  const FAN_STEP_X = 22;
+  const FAN_STEP_ANGLE = 7;
+  const fanCenter = (fan.length - 1) / 2;
   const fanAngles = useMemo(
-    () => fan.map((_, i) => (i - (fan.length - 1) / 2) * 9),
-    [fan]
+    () => fan.map((_, i) => (i - fanCenter) * FAN_STEP_ANGLE),
+    [fan, fanCenter]
   );
 
-  const sophieSize =
-    step === "result"
-      ? 108
-      : step === "question"
-        ? 120
-        : step === "pick" || step === "reveal"
-          ? 118
-          : 112;
+  const sophieSize = step === "result" ? 108 : step === "question" ? 120 : 112;
 
   const ritualStep = step === "shuffle" || step === "pick" || step === "reveal";
 
@@ -291,33 +289,53 @@ export default function ReadingPage() {
           key="shuffle"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="flex min-h-0 flex-1 flex-col items-center pt-1"
+          exit={{ opacity: 0, scale: 0.96 }}
+          className="flex min-h-0 flex-1 flex-col items-center justify-center"
         >
-          <p className="relative z-30 mb-4 shrink-0 px-2 text-center font-display text-[15px] leading-snug text-cream-50">
+          <p className="relative z-30 mb-5 shrink-0 px-2 text-center font-display text-[15px] leading-snug text-cream-50">
             Shuffling... I can feel them getting excited.
           </p>
-          <div className="relative z-20 flex h-[7.5rem] w-full max-w-[240px] items-center justify-center overflow-hidden">
-            <div
+          <div className="relative z-20 flex h-[7rem] w-full max-w-[240px] items-center justify-center">
+            <motion.div
               aria-hidden
-              className="absolute inset-x-[8%] bottom-2 top-[38%] rounded-[50%/55%] border border-gold-300/15 bg-plum-900/40"
+              className="absolute inset-x-[10%] bottom-1 top-[42%] rounded-[50%/55%] border border-gold-300/15 bg-plum-900/40"
+              animate={{ opacity: [0.6, 1, 0.6] }}
+              transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut" }}
             />
-            {[0, 1, 2, 3, 4].map((i) => (
-              <motion.div
-                key={i}
-                className="absolute h-[5.5rem] w-[3.45rem] origin-center"
-                animate={{
-                  x: [-34, 34, -20, 26, -34],
-                  y: [0, -6, 2, -4, 0],
-                  rotate: [-10, 8, -5, 12, -10],
-                  zIndex: [i, 4 - i, i, 4 - i, i],
-                }}
-                transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.12, ease: "easeInOut" }}
-              >
-                <TarotCardVisual className="h-full w-full shadow-[0_8px_20px_rgba(244,201,107,0.22)]" />
-              </motion.div>
-            ))}
+            {[0, 1, 2, 3, 4].map((i) => {
+              const splay = (i - 2) * 4;
+              return (
+                <motion.div
+                  key={i}
+                  className="absolute h-[5.5rem] w-[3.45rem] origin-bottom"
+                  initial={{ x: 0, y: 0, rotate: splay }}
+                  animate={{
+                    // two riffle passes, then gather into a neat stack
+                    x: [0, -38 + i * 5, 38 - i * 5, -26 + i * 3, 26 - i * 3, 0],
+                    y: [0, -10, -4, -12, -6, 0],
+                    rotate: [splay, -14 + i * 3, 12 - i * 3, -8 + i * 2, 8 - i * 2, 0],
+                    zIndex: [i, 4 - i, i, 4 - i, i, i],
+                  }}
+                  transition={{
+                    duration: 2.2,
+                    times: [0, 0.2, 0.42, 0.62, 0.82, 1],
+                    delay: i * 0.05,
+                    ease: "easeInOut",
+                  }}
+                >
+                  <TarotCardVisual className="h-full w-full shadow-[0_8px_20px_rgba(244,201,107,0.22)]" />
+                </motion.div>
+              );
+            })}
           </div>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 2.1 }}
+            className="mt-4 text-center text-xs font-medium text-gold-300"
+          >
+            ✨ The deck is ready...
+          </motion.p>
         </motion.div>
       )}
 
@@ -327,46 +345,47 @@ export default function ReadingPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 0.98 }}
-          className="flex min-h-0 flex-1 flex-col items-center pt-1"
+          className="flex min-h-0 flex-1 flex-col items-center justify-center"
         >
-          <p className="mb-1 text-center font-display text-[15px] text-cream-50">
+          <p className="px-2 text-center font-display text-[15px] leading-snug text-cream-50">
             {pickClosing
               ? "The three cards answer your call..."
               : `Let your hand drift... choose ${readingType.cardCount}.`}
           </p>
-          <p className="mb-3 text-xs font-semibold text-gold-300">
+          <p className="mb-3 mt-1 text-xs font-semibold text-gold-300">
             {picked.length} / {readingType.cardCount} chosen
           </p>
 
-          <div className="mb-4 flex justify-center gap-2.5">
+          <div className="mb-3 flex w-full justify-center gap-3">
             {readingType.positions.map((position, idx) => {
               const chosen = picked[idx];
               return (
-                <div
-                  key={position}
-                  className={`relative flex h-[4.5rem] w-[3rem] flex-col items-center justify-end rounded-xl border-2 transition-all duration-300 sm:h-[4.75rem] sm:w-[3.15rem] ${
-                    chosen
-                      ? "border-gold-300 bg-plum-900/80 shadow-[0_0_16px_rgba(244,201,107,0.35)]"
-                      : "border-dashed border-lavender-400/35 bg-plum-900/30"
-                  }`}
-                >
-                  {chosen ? (
-                    <>
-                      <motion.div
-                        initial={{ scale: 0.6, opacity: 0, y: 8 }}
-                        animate={{ scale: 1, opacity: 1, y: 0 }}
-                        className="h-[3.75rem] w-[2.35rem]"
-                      >
-                        <TarotCardVisual className="h-full w-full ring-2 ring-gold-300/80" />
-                      </motion.div>
-                      <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-gold-300 text-[10px] font-bold text-plum-950 shadow-md">
-                        {idx + 1}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="pb-3 text-[10px] font-semibold text-cream-100/35">{idx + 1}</span>
-                  )}
-                  <span className="absolute -bottom-5 max-w-[4.5rem] truncate text-center text-[8px] font-medium text-cream-100/50">
+                <div key={position} className="flex w-[4.75rem] flex-col items-center">
+                  <div
+                    className={`relative flex h-[4.25rem] w-[2.85rem] items-end justify-center rounded-xl border-2 transition-all duration-300 ${
+                      chosen
+                        ? "border-gold-300 bg-plum-900/80 shadow-[0_0_16px_rgba(244,201,107,0.35)]"
+                        : "border-dashed border-lavender-400/35 bg-plum-900/30"
+                    }`}
+                  >
+                    {chosen ? (
+                      <>
+                        <motion.div
+                          initial={{ scale: 0.6, opacity: 0, y: 8 }}
+                          animate={{ scale: 1, opacity: 1, y: 0 }}
+                          className="h-[3.6rem] w-[2.25rem] pb-[2px]"
+                        >
+                          <TarotCardVisual className="h-full w-full ring-2 ring-gold-300/80" />
+                        </motion.div>
+                        <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-gold-300 text-[10px] font-bold text-plum-950 shadow-md">
+                          {idx + 1}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="pb-2.5 text-[10px] font-semibold text-cream-100/35">{idx + 1}</span>
+                    )}
+                  </div>
+                  <span className="mt-1 line-clamp-2 min-h-[1.5rem] w-full text-center text-[9px] font-medium leading-tight text-cream-100/60">
                     {position}
                   </span>
                 </div>
@@ -374,44 +393,52 @@ export default function ReadingPage() {
             })}
           </div>
 
-          <div className="relative flex h-44 w-full max-w-md items-end justify-center">
+          <div className="relative flex h-36 w-full max-w-[340px] items-end justify-center">
             {fan.map((card, i) => {
               const isPicked = picked.some((p) => p.card.id === card.id);
               const pickOrder = picked.findIndex((p) => p.card.id === card.id);
               const isHovered = hoveredCardId === card.id;
-              const spreadX = pickOrder >= 0 ? (pickOrder - (readingType.cardCount - 1) / 2) * 88 : 0;
+              const spreadX = pickOrder >= 0 ? (pickOrder - (readingType.cardCount - 1) / 2) * 80 : 0;
+              // gentle arc: edge cards sit slightly lower than center
+              const arcY = Math.abs(i - fanCenter) * 4;
 
               return (
                 <motion.button
                   key={card.id}
                   type="button"
                   disabled={pickClosing || (picked.length >= readingType.cardCount && !isPicked)}
-                  initial={{ opacity: 0, y: 48 }}
+                  initial={{ opacity: 0, x: -(i - fanCenter) * FAN_STEP_X, y: 24, rotate: 0 }}
                   animate={{
                     opacity: pickClosing && !isPicked ? 0 : 1,
-                    y: pickClosing && isPicked ? -52 : isPicked ? -34 : isHovered ? -20 : 0,
-                    x: pickClosing && isPicked ? spreadX : 0,
-                    scale: pickClosing && isPicked ? 1.06 : isPicked ? 1.07 : isHovered ? 1.05 : 1,
+                    x: pickClosing && isPicked ? spreadX - (i - fanCenter) * FAN_STEP_X : 0,
+                    y: pickClosing && isPicked
+                      ? -48
+                      : isPicked
+                        ? arcY - 30
+                        : isHovered
+                          ? arcY - 18
+                          : arcY,
+                    scale: pickClosing && isPicked ? 1.08 : isPicked ? 1.06 : isHovered ? 1.05 : 1,
                     rotate: pickClosing && isPicked ? 0 : fanAngles[i],
                     zIndex: isPicked ? 40 : isHovered ? 30 : i,
                   }}
                   transition={{
-                    delay: pickClosing ? pickOrder * 0.08 : i * 0.04,
+                    delay: pickClosing ? Math.max(pickOrder, 0) * 0.08 : i * 0.05,
                     type: "spring",
-                    stiffness: pickClosing ? 280 : 260,
-                    damping: pickClosing ? 24 : 20,
+                    stiffness: pickClosing ? 280 : 240,
+                    damping: pickClosing ? 24 : 21,
                   }}
-                  whileTap={pickClosing || isPicked ? undefined : { scale: 0.96, y: -10 }}
+                  whileTap={pickClosing || isPicked ? undefined : { scale: 0.96 }}
                   onHoverStart={() => !pickClosing && !isPicked && setHoveredCardId(card.id)}
                   onHoverEnd={() => setHoveredCardId((id) => (id === card.id ? null : id))}
                   onFocus={() => !pickClosing && !isPicked && setHoveredCardId(card.id)}
                   onBlur={() => setHoveredCardId((id) => (id === card.id ? null : id))}
                   onClick={() => pickCard(card)}
-                  className={`absolute bottom-0 h-36 w-[5.625rem] origin-bottom outline-none ${
+                  className={`absolute bottom-0 h-[6.4rem] w-16 origin-bottom outline-none ${
                     pickClosing && !isPicked ? "pointer-events-none" : ""
                   } ${isPicked ? "cursor-default" : "cursor-pointer"}`}
                   style={{
-                    marginLeft: `${(i - fan.length / 2) * 26}px`,
+                    marginLeft: `${(i - fanCenter) * FAN_STEP_X}px`,
                   }}
                 >
                   <motion.div
@@ -438,18 +465,9 @@ export default function ReadingPage() {
                       <motion.span
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="absolute -right-1 -top-1 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-gold-300 text-xs font-bold text-plum-950 shadow-lg ring-2 ring-plum-950/40"
+                        className="absolute -right-1 -top-1 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-gold-300 text-[11px] font-bold text-plum-950 shadow-lg ring-2 ring-plum-950/40"
                       >
                         {pickOrder + 1}
-                      </motion.span>
-                    )}
-                    {isHovered && !isPicked && !pickClosing && (
-                      <motion.span
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="pointer-events-none absolute inset-x-0 -top-6 text-center text-[10px] font-semibold text-blush-200"
-                      >
-                        Choose me
                       </motion.span>
                     )}
                   </motion.div>
@@ -458,15 +476,17 @@ export default function ReadingPage() {
             })}
           </div>
 
-          {pickClosing && (
-            <motion.p
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-4 text-center text-xs font-medium text-gold-300"
-            >
-              ✨ Preparing your reveal...
-            </motion.p>
-          )}
+          <div className="mt-3 h-4 shrink-0">
+            {pickClosing && (
+              <motion.p
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center text-xs font-medium text-gold-300"
+              >
+                ✨ Preparing your reveal...
+              </motion.p>
+            )}
+          </div>
         </motion.div>
       )}
 
@@ -477,17 +497,39 @@ export default function ReadingPage() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0 }}
           transition={{ type: "spring", stiffness: 260, damping: 26 }}
-          className="flex min-h-0 flex-1 flex-col items-center pt-1"
+          className="flex min-h-0 flex-1 flex-col items-center justify-center"
         >
-          <p className="mb-4 text-center font-display text-[15px] text-cream-50">
+          <p className="mb-4 px-2 text-center font-display text-[15px] leading-snug text-cream-50">
             Here they come... breathe with me.
           </p>
-          <div className="flex flex-wrap items-start justify-center gap-4">
+          <div className="flex w-full items-start justify-center gap-2.5 sm:gap-4">
             {picked.map((p, i) => {
               const revealed = i < revealedCount;
               return (
-                <div key={p.card.id} className="flex w-[5.625rem] flex-col items-center gap-1.5">
-                  <div className="h-40 w-[5.625rem]" style={{ perspective: 800 }}>
+                <motion.div
+                  key={p.card.id}
+                  initial={{ opacity: 0, y: 32 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.12, type: "spring", stiffness: 240, damping: 22 }}
+                  className="flex w-[5.25rem] flex-col items-center gap-1.5 sm:w-[5.625rem]"
+                >
+                  <motion.div
+                    className="h-[8.4rem] w-[5.25rem] sm:h-40 sm:w-[5.625rem]"
+                    style={{ perspective: 800 }}
+                    animate={
+                      revealed
+                        ? {
+                            scale: [1, 1.08, 1],
+                            filter: [
+                              "drop-shadow(0 0 0px rgba(244,201,107,0))",
+                              "drop-shadow(0 0 18px rgba(244,201,107,0.65))",
+                              "drop-shadow(0 0 6px rgba(244,201,107,0.25))",
+                            ],
+                          }
+                        : {}
+                    }
+                    transition={{ duration: 0.8, times: [0, 0.55, 1] }}
+                  >
                     <motion.div
                       className="preserve-3d relative h-full w-full"
                       animate={{ rotateY: revealed ? 180 : 0 }}
@@ -501,35 +543,39 @@ export default function ReadingPage() {
                         <TarotCardFace card={p.card} reversed={p.reversed} className="h-full w-full" />
                       </div>
                     </motion.div>
-                  </div>
-                  <span className="text-center text-[10px] font-bold uppercase tracking-wider text-lavender-200">
+                  </motion.div>
+                  <span className="line-clamp-2 min-h-[1.5rem] w-full text-center text-[9px] font-bold leading-tight tracking-wide text-lavender-200">
                     {p.position}
                   </span>
-                  {revealed && (
-                    <motion.span
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-center text-[11px] font-bold text-cream-50"
-                    >
-                      {p.card.name}
-                      {p.reversed && <span className="block text-[9px] text-blush-300">reversed</span>}
-                    </motion.span>
-                  )}
-                </div>
+                  <div className="min-h-[2rem]">
+                    {revealed && (
+                      <motion.span
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="block text-center text-[11px] font-bold leading-tight text-cream-50"
+                      >
+                        {p.card.name}
+                        {p.reversed && <span className="block text-[9px] font-medium text-blush-300">reversed</span>}
+                      </motion.span>
+                    )}
+                  </div>
+                </motion.div>
               );
             })}
           </div>
-          {revealedCount >= picked.length && (
-            <motion.button
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              onClick={requestInterpretation}
-              disabled={loadingAi}
-              className="btn-magical shimmer mt-6 rounded-2xl px-8 py-3 text-sm font-bold text-plum-900 disabled:opacity-60"
-            >
-              {loadingAi ? "Sophie is reading the threads..." : "Hear Sophie's Reading 🔮"}
-            </motion.button>
-          )}
+          <div className="mt-2 flex min-h-[3.25rem] items-center">
+            {revealedCount >= picked.length && (
+              <motion.button
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                onClick={requestInterpretation}
+                disabled={loadingAi}
+                className="btn-magical shimmer rounded-2xl px-8 py-3 text-sm font-bold text-plum-900 disabled:opacity-60"
+              >
+                {loadingAi ? "Sophie is reading the threads..." : "Hear Sophie's Reading 🔮"}
+              </motion.button>
+            )}
+          </div>
         </motion.div>
       )}
 
@@ -541,10 +587,16 @@ export default function ReadingPage() {
           className="flex flex-1 flex-col"
         >
           <div className="mb-3 flex justify-center gap-2">
-            {picked.map((p) => (
-              <div key={p.card.id} className="h-[5.25rem] w-[3.5rem] sm:h-24 sm:w-16">
+            {picked.map((p, i) => (
+              <motion.div
+                key={p.card.id}
+                initial={{ opacity: 0, y: -10, scale: 0.85 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ delay: i * 0.08, type: "spring", stiffness: 260, damping: 20 }}
+                className="h-[5.25rem] w-[3.5rem] sm:h-24 sm:w-16"
+              >
                 <TarotCardFace card={p.card} reversed={p.reversed} className="h-full w-full" />
-              </div>
+              </motion.div>
             ))}
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl border border-gold-300/20 bg-plum-800/75 p-4">
@@ -596,34 +648,34 @@ export default function ReadingPage() {
           <div className="flex min-h-0 flex-1 flex-col px-4 py-4 sm:px-5">
             {ritualStep ? (
               <div className="flex min-h-0 flex-1 flex-col">
-                <div className="relative mx-auto w-full max-w-[min(100%,340px)] shrink-0">
+                <div className="relative mx-auto w-full max-w-[min(100%,300px)] shrink-0">
                   <div
                     aria-hidden
-                    className="pointer-events-none absolute inset-x-[12%] bottom-8 top-[18%] rounded-[45%] bg-lavender-300/10 blur-2xl"
+                    className="pointer-events-none absolute inset-x-[12%] bottom-6 top-[18%] rounded-[45%] bg-lavender-300/10 blur-2xl"
                   />
                   <div className="relative z-10 flex justify-center">
                     <Sophie
                       emotion={emotion}
                       size={sophieSize}
-                      className="relative z-[2] -mb-[2.85rem] drop-shadow-[0_8px_24px_rgba(20,8,34,0.45)] sm:-mb-12"
+                      className="relative z-[2] -mb-10 drop-shadow-[0_8px_24px_rgba(20,8,34,0.45)]"
                     />
                   </div>
                   <div className="relative z-20 mx-auto w-full px-1">
                     <div
-                      className="relative mx-auto h-[4.25rem] w-full max-w-[17.5rem] rounded-[50%/55%] border-t-2 border-gold-300/40 shadow-[0_10px_28px_rgba(44,24,64,0.45),inset_0_4px_14px_rgba(247,183,216,0.06)] sm:h-[4.75rem]"
+                      className="relative mx-auto h-[3.5rem] w-full max-w-[15.5rem] rounded-[50%/55%] border-t-2 border-gold-300/40 shadow-[0_10px_28px_rgba(44,24,64,0.45),inset_0_4px_14px_rgba(247,183,216,0.06)]"
                       style={{
                         background:
                           "radial-gradient(ellipse at 50% 12%, #6b4f8a 0%, #4a3568 38%, #392952 72%, #2a1d3f 100%)",
                       }}
                     >
                       <div className="absolute left-1/2 top-1/2 h-[62%] w-[58%] -translate-x-1/2 -translate-y-1/2 rounded-[50%/55%] border border-gold-300/20" />
-                      <span className="absolute bottom-2 left-[12%] text-sm drop-shadow-glow-gold">🔮</span>
-                      <span className="absolute bottom-2.5 right-[12%] text-sm">🕯️</span>
+                      <span className="absolute bottom-1.5 left-[12%] text-sm drop-shadow-glow-gold">🔮</span>
+                      <span className="absolute bottom-2 right-[12%] text-sm">🕯️</span>
                     </div>
-                    <div className="mx-auto -mt-1 h-2.5 w-[62%] rounded-[50%] bg-plum-950/80 blur-sm" />
+                    <div className="mx-auto -mt-1 h-2.5 w-[58%] rounded-[50%] bg-plum-950/80 blur-sm" />
                   </div>
                 </div>
-                <div className="relative z-30 mt-2 flex min-h-0 flex-1 flex-col">{stepContent}</div>
+                <div className="relative z-30 mt-1 flex min-h-0 flex-1 flex-col">{stepContent}</div>
               </div>
             ) : (
               <>

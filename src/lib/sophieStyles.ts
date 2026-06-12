@@ -28,6 +28,13 @@ export interface SophieStyle {
 const HAIR = CANON_COLORS.hair;
 const HAIR_SHADE = CANON_COLORS.hairShade;
 
+/** Transparent Classic Sophie sprite — default app-wide when no outfit sprite is set. */
+export const CLASSIC_SOPHIE_CHARACTER_SRC = "/sophie-character.png";
+export const CLASSIC_SOPHIE_CHARACTER_ASPECT = 1.5127;
+
+export const PREMIUM_DRESS_CHARACTER_SRC = "/sophie-premium-dress.png";
+export const PREMIUM_DRESS_CHARACTER_ASPECT = 1.4076;
+
 export const SOPHIE_STYLES: SophieStyle[] = [
   {
     id: "classic",
@@ -39,21 +46,21 @@ export const SOPHIE_STYLES: SophieStyle[] = [
     roomGlow: "#cdb7f5",
     description: "Sophie as you first met her — pink waist-length hair, white blouse, pink ribbon, and her signature big white bow.",
     unlockBond: 0,
-    characterSrc: "/sophie-character.png",
-    characterAspect: 1.5127,
+    characterSrc: CLASSIC_SOPHIE_CHARACTER_SRC,
+    characterAspect: CLASSIC_SOPHIE_CHARACTER_ASPECT,
   },
   {
     id: "premium-dress",
     name: "Premium Dress",
     rarity: "ssr",
     hair: HAIR, hairShade: HAIR_SHADE,
-    dress: "#fce4f1", dressShade: "#d9577a",
+    dress: "#6b1f3a", dressShade: "#4a1528",
     accent: "#f4c96b",
     roomGlow: "#f9e3b3",
-    description: "A lavish pink and gold gown with layered ruffles, rose accents, and star-kissed drapery.",
+    description: "A burgundy and gold Victorian ball gown with lace sleeves, rose accents, and jeweled drapery.",
     unlockBond: 0,
-    characterSrc: "/sophie-premium-dress.png",
-    characterAspect: 1.4413,
+    characterSrc: PREMIUM_DRESS_CHARACTER_SRC,
+    characterAspect: PREMIUM_DRESS_CHARACTER_ASPECT,
   },
   {
     id: "witch",

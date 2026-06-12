@@ -6,7 +6,11 @@ import { motion, useAnimationControls } from "framer-motion";
 import type { SophieEmotion } from "@/lib/sophieCanon";
 import { getMoodTheme } from "@/lib/ambience";
 import { useSophieStore } from "@/lib/store";
-import { getStyle } from "@/lib/sophieStyles";
+import {
+  CLASSIC_SOPHIE_CHARACTER_ASPECT,
+  CLASSIC_SOPHIE_CHARACTER_SRC,
+  getStyle,
+} from "@/lib/sophieStyles";
 
 export type { SophieEmotion };
 
@@ -55,8 +59,8 @@ export default function Sophie({
   const theme = getMoodTheme(emotion);
   const activeStyleId = useSophieStore((s) => s.activeStyleId);
   const style = getStyle(styleId ?? activeStyleId);
-  const imageSrc = style.characterSrc ?? "/sophie-character.png";
-  const imageAspect = style.characterAspect ?? 1.35;
+  const imageSrc = style.characterSrc ?? CLASSIC_SOPHIE_CHARACTER_SRC;
+  const imageAspect = style.characterAspect ?? CLASSIC_SOPHIE_CHARACTER_ASPECT;
   const imageHeight = Math.round(size * imageAspect);
 
   useEffect(() => {

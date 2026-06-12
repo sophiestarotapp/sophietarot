@@ -157,7 +157,7 @@ export const useSophieStore = create<SophieState>()(
       setPremium: (v) => set({ isPremium: v }),
 
       activeStyleId: "classic",
-      unlockedStyleIds: ["classic"],
+      unlockedStyleIds: ["classic", "premium-dress"],
       setActiveStyle: (id) => {
         const style = SOPHIE_STYLES.find((s) => s.id === id);
         if (!style) return;
@@ -317,6 +317,7 @@ export const useSophieStore = create<SophieState>()(
         const valid = new Set(SOPHIE_STYLES.map((s) => s.id));
         const unlocked = state.unlockedStyleIds.filter((id) => valid.has(id));
         if (!unlocked.includes("classic")) unlocked.unshift("classic");
+        if (!unlocked.includes("premium-dress")) unlocked.push("premium-dress");
         const active = valid.has(state.activeStyleId) ? state.activeStyleId : "classic";
         if (
           unlocked.length !== state.unlockedStyleIds.length ||

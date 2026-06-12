@@ -1,4 +1,4 @@
-"""Prepare Sophie Premium Dress PNG: transparent background + clean hair edges."""
+"""Prepare Sophie Premium Dress PNG: transparent background + preserved face/eyes."""
 from __future__ import annotations
 
 from collections import deque
@@ -8,12 +8,26 @@ import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = Path(
+ASSETS = Path(
     r"C:\Users\MyPC\.cursor\projects\c-Users-MyPC-OneDrive-Desktop-Sophies-Tarot-App\assets"
-    r"\c__Users_MyPC_AppData_Roaming_Cursor_User_workspaceStorage_bc8002c09a509e03fad44d0f48ddfa5e_images_"
-    r"Sophie_Premium_Dress-fdb5ec1b-9212-4ac3-9318-b8d7fc836b5e.png"
 )
+SRC_CANDIDATES = [
+    ROOT / "public" / "sophie-premium-dress-source.png",
+    ASSETS
+    / "c__Users_MyPC_AppData_Roaming_Cursor_User_workspaceStorage_bc8002c09a509e03fad44d0f48ddfa5e_images_Sophie_Premium_Dress-8c5302aa-0907-447c-843e-44cfb87d5e45.png",
+    ASSETS
+    / "c__Users_MyPC_AppData_Roaming_Cursor_User_workspaceStorage_bc8002c09a509e03fad44d0f48ddfa5e_images_Sophie_Premium_Dress-08b625b0-e162-48e5-8a65-bf3bdfccd763.png",
+    ASSETS
+    / "c__Users_MyPC_AppData_Roaming_Cursor_User_workspaceStorage_bc8002c09a509e03fad44d0f48ddfa5e_images_Sophie_Premium_Dress-fdb5ec1b-9212-4ac3-9318-b8d7fc836b5e.png",
+]
 OUT = ROOT / "public" / "sophie-premium-dress.png"
+
+
+def resolve_source() -> Path:
+    for path in SRC_CANDIDATES:
+        if path.exists():
+            return path
+    raise FileNotFoundError("Premium Dress Sophie source PNG not found")
 
 
 def is_bg(r: int, g: int, b: int) -> bool:
@@ -25,31 +39,45 @@ def is_pink_hair(r: int, g: int, b: int) -> bool:
     return r > 65 and r > g + 5 and b > 50 and g > 40
 
 
-def in_face_zone(y: int, x: int, h: int, w: int) -> bool:
-    cx, cy = w * 0.5, h * 0.245
-    rx, ry = w * 0.15, h * 0.11
-    return ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1.0
-
-
 def is_skin(r: int, g: int, b: int) -> bool:
     return r > 95 and g > 70 and b > 72 and r >= g - 8
 
 
-def is_dark(r: int, g: int, b: int) -> bool:
-    return max(r, g, b) <= 72
+def in_face_preserve_zone(y: int, x: int, h: int, w: int) -> bool:
+    if y < h * 0.165 or y > h * 0.385:
+        return False
+    if x < w * 0.22 or x > w * 0.78:
+        return False
+    return True
 
 
 def in_eye_zone(y: int, x: int, h: int, w: int) -> bool:
-    """Cover both eyes including sclera and highlights (measured from source art)."""
-    cy = h * 0.296
-    for cx in (w * 0.454, w * 0.573):
-        if ((x - cx) / (w * 0.042)) ** 2 + ((y - cy) / (h * 0.030)) ** 2 <= 1.0:
+    cy = h * 0.299
+    for cx in (w * 0.367, w * 0.597):
+        if ((x - cx) / (w * 0.058)) ** 2 + ((y - cy) / (h * 0.048)) ** 2 <= 1.0:
             return True
     return False
 
 
+def in_hair_cleanup_zone(y: int, x: int, h: int, w: int) -> bool:
+    return y < int(h * 0.22) and not in_face_preserve_zone(y, x, h, w)
+
+
+def restore_preserved_face_from_source(arr: np.ndarray, src_rgb: np.ndarray) -> None:
+    h, w = arr.shape[:2]
+    for y in range(h):
+        for x in range(w):
+            if not in_face_preserve_zone(y, x, h, w):
+                continue
+            sr, sg, sb = map(int, src_rgb[y, x])
+            if is_bg(sr, sg, sb):
+                arr[y, x, 3] = 0
+                continue
+            arr[y, x, :3] = src_rgb[y, x]
+            arr[y, x, 3] = 255
+
+
 def restore_eyes_from_source(arr: np.ndarray, src_rgb: np.ndarray) -> None:
-    """Restore eye pixels from source after hair cleanup passes."""
     h, w = arr.shape[:2]
     for y in range(h):
         for x in range(w):
@@ -57,6 +85,7 @@ def restore_eyes_from_source(arr: np.ndarray, src_rgb: np.ndarray) -> None:
                 continue
             sr, sg, sb = map(int, src_rgb[y, x])
             if is_bg(sr, sg, sb):
+                arr[y, x, 3] = 0
                 continue
             arr[y, x, :3] = src_rgb[y, x]
             arr[y, x, 3] = 255
@@ -133,7 +162,7 @@ def fill_hair_gaps(arr: np.ndarray, color: np.ndarray, hair_cut: int) -> None:
     h, w = arr.shape[:2]
     for y in range(hair_cut):
         for x in range(w):
-            if arr[y, x, 3] == 0 or in_eye_zone(y, x, h, w):
+            if not in_hair_cleanup_zone(y, x, h, w) or arr[y, x, 3] == 0:
                 continue
             r, g, b = map(int, arr[y, x, :3])
             if is_skin(r, g, b) or max(r, g, b) > 72:
@@ -145,15 +174,13 @@ def fill_hair_gaps(arr: np.ndarray, color: np.ndarray, hair_cut: int) -> None:
 
 
 def remove_dark_halos(arr: np.ndarray, color: np.ndarray, hair_cut: int) -> None:
-    """Strip dark fringe pixels sitting on the outer edge of pink hair."""
     h, w = arr.shape[:2]
     for y in range(hair_cut):
         for x in range(w):
-            if arr[y, x, 3] == 0 or in_eye_zone(y, x, h, w):
+            if not in_hair_cleanup_zone(y, x, h, w) or arr[y, x, 3] == 0:
                 continue
             r, g, b = map(int, arr[y, x, :3])
-            mx = max(r, g, b)
-            if is_skin(r, g, b) or mx > 58:
+            if is_skin(r, g, b) or max(r, g, b) > 58:
                 continue
             pink_n = pink_neighbors(arr, y, x, radius=4)
             trans_n = transparent_neighbors(arr, y, x, radius=2)
@@ -164,11 +191,10 @@ def remove_dark_halos(arr: np.ndarray, color: np.ndarray, hair_cut: int) -> None
 
 
 def soften_hair_fringe(arr: np.ndarray, color: np.ndarray, hair_cut: int) -> None:
-    """Second pass for remaining near-black pixels embedded in hair volume."""
     h, w = arr.shape[:2]
     for y in range(hair_cut):
         for x in range(w):
-            if arr[y, x, 3] == 0 or in_eye_zone(y, x, h, w):
+            if not in_hair_cleanup_zone(y, x, h, w) or arr[y, x, 3] == 0:
                 continue
             r, g, b = map(int, arr[y, x, :3])
             if is_skin(r, g, b) or max(r, g, b) > 80:
@@ -179,11 +205,10 @@ def soften_hair_fringe(arr: np.ndarray, color: np.ndarray, hair_cut: int) -> Non
 
 
 def polish_hair(arr: np.ndarray, color: np.ndarray, hair_cut: int) -> None:
-    """Final sweep for leftover black specks in the hair volume."""
     h, w = arr.shape[:2]
     for y in range(hair_cut):
         for x in range(w):
-            if arr[y, x, 3] == 0 or in_eye_zone(y, x, h, w):
+            if not in_hair_cleanup_zone(y, x, h, w) or arr[y, x, 3] == 0:
                 continue
             r, g, b = map(int, arr[y, x, :3])
             if is_skin(r, g, b) or max(r, g, b) > 68:
@@ -191,19 +216,6 @@ def polish_hair(arr: np.ndarray, color: np.ndarray, hair_cut: int) -> None:
             if pink_neighbors(arr, y, x, radius=4) < 3:
                 continue
             arr[y, x, :3] = color.astype(np.uint8)
-
-
-def restore_face_from_source(arr: np.ndarray, src_rgb: np.ndarray) -> None:
-    h, w = arr.shape[:2]
-    for y in range(h):
-        for x in range(w):
-            if arr[y, x, 3] == 0:
-                continue
-            if not in_face_zone(y, x, h, w):
-                continue
-            sr, sg, sb = map(int, src_rgb[y, x])
-            if is_skin(sr, sg, sb):
-                arr[y, x, :3] = src_rgb[y, x]
 
 
 def trim_transparent(arr: np.ndarray, pad: int = 2) -> np.ndarray:
@@ -216,9 +228,10 @@ def trim_transparent(arr: np.ndarray, pad: int = 2) -> np.ndarray:
 
 
 def main() -> None:
-    src_rgb = np.array(Image.open(SRC).convert("RGB"), dtype=np.uint8)
+    src_path = resolve_source()
+    src_rgb = np.array(Image.open(src_path).convert("RGB"), dtype=np.uint8)
     h = src_rgb.shape[0]
-    hair_cut = int(h * 0.62)
+    hair_cut = int(h * 0.22)
 
     arr = remove_background(src_rgb)
     color = hair_color(arr, hair_cut)
@@ -226,9 +239,7 @@ def main() -> None:
     remove_dark_halos(arr, color, hair_cut)
     soften_hair_fringe(arr, color, hair_cut)
     polish_hair(arr, color, hair_cut)
-    restore_face_from_source(arr, src_rgb)
-    restore_eyes_from_source(arr, src_rgb)
-    polish_hair(arr, color, hair_cut)
+    restore_preserved_face_from_source(arr, src_rgb)
     restore_eyes_from_source(arr, src_rgb)
     arr = trim_transparent(arr)
 
@@ -238,6 +249,7 @@ def main() -> None:
 
     top = arr[: int(ch * 0.45), :, :]
     dark = (top[:, :, :3].max(axis=2) <= 60) & (top[:, :, 3] > 0)
+    print(f"Source: {src_path}")
     print(f"Wrote {OUT} ({cw}x{ch}), aspect={ch / cw:.4f}")
     print(f"Remaining dark pixels in hair zone: {dark.sum()}")
 
